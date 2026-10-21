@@ -19,18 +19,18 @@ def prompt(contexts):
     evidence = "\n\n".join(f"【{x['chunk_id']}】{x['text']}" for x in contexts)
     return "只能根据以下政策证据回答；证据不足则说无法确定。\n" + evidence + "\n问题：" + question
 
-+model_path = ROOT / "models" / "qwen2.5-0.5b-instruct"
-+if not model_path.exists():
-+    raise SystemExit("请先运行 download_qwen_from_modelscope.py 下载本地 Qwen 模型。")
-+tokenizer = AutoTokenizer.from_pretrained(model_path)
-+model = AutoModelForCausalLM.from_pretrained(model_path).eval()
-+
-+def answer(contexts):
-+    chat = tokenizer.apply_chat_template([{"role":"user", "content":prompt(contexts)}], tokenize=False, add_generation_prompt=True)
-+    inputs = tokenizer(chat, return_tensors="pt")
-+    with torch.no_grad():
-+        output = model.generate(**inputs, do_sample=False, max_new_tokens=160, pad_token_id=tokenizer.eos_token_id)
-+    return tokenizer.decode(output[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True)
-+
-+print("无 Rerank（向量 Top-3）:\n", answer(before[:3]))
-+print("\n有 Rerank（重排 Top-3）:\n", answer(after[:3]))
+model_path = ROOT / "models" / "qwen2.5-0.5b-instruct"
+if not model_path.exists():
+    raise SystemExit("请先运行 download_qwen_from_modelscope.py 下载本地 Qwen 模型。")
+tokenizer = AutoTokenizer.from_pretrained(model_path)
+model = AutoModelForCausalLM.from_pretrained(model_path).eval()
+
+def answer(contexts):
+    chat = tokenizer.apply_chat_template([{"role":"user", "content":prompt(contexts)}], tokenize=False, add_generation_prompt=True)
+    inputs = tokenizer(chat, return_tensors="pt")
+    with torch.no_grad():
+        output = model.generate(**inputs, do_sample=False, max_new_tokens=160, pad_token_id=tokenizer.eos_token_id)
+    return tokenizer.decode(output[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+
+print("无 Rerank（向量 Top-3）:\n", answer(before[:3]))
+print("\n有 Rerank（重排 Top-3）:\n", answer(after[:3]))
